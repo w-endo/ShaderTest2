@@ -48,25 +48,29 @@ float4 PS(VS_OUT inData) : SV_TARGET
 
 	float4 S = dot(inData.normal, light);
 	S = clamp(S, 0, 1);
-//	if (S.r < 0.3)
-//		S = 0.3;
-//	else
-//		S = 1;
 
 
 	float4 R = reflect(light, inData.normal);
 	specular = pow(clamp(dot(R, inData.V), 0, 1), 10) * 3;
 
+	float alpha;
+
 	if (isTexture)
 	{
 		diffuse = tex.Sample(smp, inData.uv) * S;
 		ambient = tex.Sample(smp, inData.uv) * 0.2;
+		alpha = tex.Sample(smp, inData.uv).a;
 	}
 	else
 	{
 		diffuse = color * S;
 		ambient = color * 0.2;
+		alpha = color.a;
 	}
 
-	return diffuse + ambient + specular;
+	float4 result = diffuse + ambient + specular;
+
+	result.a = alpha;
+	
+	return result;
 }
