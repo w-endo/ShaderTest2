@@ -101,6 +101,23 @@ void Fbx::InitVertex(fbxsdk::FbxMesh* pMesh)
 	}
 
 
+	//タンジェント取得
+	for (int i = 0; i < polygonCount_; i++)
+	{
+		int startIndex = pMesh->GetPolygonVertexIndex(i);
+
+		FbxGeometryElementTangent* t = pMesh->GetElementTangent(0);
+		FbxVector4 tangent = t->GetDirectArray().GetAt(startIndex).mData;
+
+		for (int j = 0; j < 3; j++)
+		{
+			int index = pMesh->GetPolygonVertices()[startIndex + j];
+			vertices[index].tangent = XMVectorSet((float)tangent[0], (float)tangent[1], (float)tangent[2], 0.0f);
+		}
+	}
+
+
+
 	HRESULT hr;
 	D3D11_BUFFER_DESC bd_vertex;
 	bd_vertex.ByteWidth = sizeof(VERTEX) * vertexCount_;
@@ -217,43 +234,80 @@ void Fbx::InitMaterial(fbxsdk::FbxNode* pNode)
 		pMaterialList_[i].diffuse = XMFLOAT4((float)diffuse[0], (float)diffuse[1], (float)diffuse[2], 1.0f);
 
 
-
-
-		//テクスチャ情報
-		FbxProperty  lProperty = pMaterial->FindProperty(FbxSurfaceMaterial::sDiffuse);
-
-		//テクスチャの数
-		int fileTextureCount = lProperty.GetSrcObjectCount<FbxFileTexture>();
-
-		//テクスチャあり
-		if (fileTextureCount != 0)
+		//普通のテクスチャ
 		{
-			FbxFileTexture* textureInfo = lProperty.GetSrcObject<FbxFileTexture>(0);
-			const char* textureFilePath = textureInfo->GetRelativeFileName();
+			//テクスチャ情報
+			FbxProperty  lProperty = pMaterial->FindProperty(FbxSurfaceMaterial::sDiffuse);
 
-			//ファイル名+拡張だけにする
-			char name[_MAX_FNAME];	//ファイル名
-			char ext[_MAX_EXT];	//拡張子
-			_splitpath_s(textureFilePath, nullptr, 0, nullptr, 0, name, _MAX_FNAME, ext, _MAX_EXT);
-			sprintf_s(name, "%s%s", name, ext);
+			//テクスチャの数
+			int fileTextureCount = lProperty.GetSrcObjectCount<FbxFileTexture>();
+
+			//テクスチャあり
+			if (fileTextureCount != 0)
+			{
+				FbxFileTexture* textureInfo = lProperty.GetSrcObject<FbxFileTexture>(0);
+				const char* textureFilePath = textureInfo->GetRelativeFileName();
+
+				//ファイル名+拡張だけにする
+				char name[_MAX_FNAME];	//ファイル名
+				char ext[_MAX_EXT];	//拡張子
+				_splitpath_s(textureFilePath, nullptr, 0, nullptr, 0, name, _MAX_FNAME, ext, _MAX_EXT);
+				sprintf_s(name, "%s%s", name, ext);
 
 
-			//ファイルからテクスチャ作成
-			pMaterialList_[i].pTexture = new Texture;
-			wchar_t wtext[FILENAME_MAX];
-			size_t ret;
-			mbstowcs_s(&ret, wtext, name, strlen(textureFilePath));
+				//ファイルからテクスチャ作成
+				pMaterialList_[i].pTexture = new Texture;
+				wchar_t wtext[FILENAME_MAX];
+				size_t ret;
+				mbstowcs_s(&ret, wtext, name, strlen(textureFilePath));
 
-			pMaterialList_[i].pTexture->Load(wtext);
+				pMaterialList_[i].pTexture->Load(wtext);
+			}
+
+			//テクスチャ無し
+			else
+			{
+				pMaterialList_[i].pTexture = nullptr;
+			}
 		}
 
-		//テクスチャ無し
-		else
+		//ノーマルテクスチャ
 		{
-			pMaterialList_[i].pTexture = nullptr;
+			//テクスチャ情報
+			FbxProperty  lProperty = pMaterial->FindProperty(FbxSurfaceMaterial::sNormalMap);
+
+			//テクスチャの数
+			int fileTextureCount = lProperty.GetSrcObjectCount<FbxFileTexture>();
+
+			//テクスチャあり
+			if (fileTextureCount != 0)
+			{
+				FbxFileTexture* textureInfo = lProperty.GetSrcObject<FbxFileTexture>(0);
+				const char* textureFilePath = textureInfo->GetRelativeFileName();
+
+				//ファイル名+拡張だけにする
+				char name[_MAX_FNAME];	//ファイル名
+				char ext[_MAX_EXT];	//拡張子
+				_splitpath_s(textureFilePath, nullptr, 0, nullptr, 0, name, _MAX_FNAME, ext, _MAX_EXT);
+				sprintf_s(name, "%s%s", name, ext);
 
 
+				//ファイルからテクスチャ作成
+				pMaterialList_[i].pNormalTex = new Texture;
+				wchar_t wtext[FILENAME_MAX];
+				size_t ret;
+				mbstowcs_s(&ret, wtext, name, strlen(textureFilePath));
+
+				pMaterialList_[i].pNormalTex->Load(wtext);
+			}
+
+			//テクスチャ無し
+			else
+			{
+				pMaterialList_[i].pNormalTex = nullptr;
+			}
 		}
+
 	}
 }
 
@@ -299,6 +353,12 @@ void Fbx::Draw(Transform& transform)
 
 			ID3D11ShaderResourceView* pSRV = pMaterialList_[i].pTexture->GetSRV();
 			Direct3D::pContext->PSSetShaderResources(0, 1, &pSRV);
+		}
+
+		if (pMaterialList_[i].pNormalTex)
+		{
+			ID3D11ShaderResourceView* pSRV = pMaterialList_[i].pNormalTex->GetSRV();
+			Direct3D::pContext->PSSetShaderResources(1, 1, &pSRV);
 		}
 
 		Direct3D::pContext->Unmap(pConstantBuffer_, 0);	//再開

@@ -19,6 +19,7 @@ class Fbx
 	struct MATERIAL
 	{
 		Texture* pTexture;
+		Texture* pNormalTex;
 		XMFLOAT4	diffuse;
 	};
 
@@ -37,7 +38,9 @@ class Fbx
 		XMVECTOR position;
 		XMVECTOR uv;
 		XMVECTOR normal;
+		XMVECTOR tangent;
 	};
+
 	int vertexCount_;	//頂点数
 	int polygonCount_;	//ポリゴン数
 	int materialCount_;	//マテリアルの個数

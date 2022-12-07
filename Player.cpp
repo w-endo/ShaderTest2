@@ -19,11 +19,11 @@ Player::~Player()
 void Player::Initialize()
 {
     pFbx = new Fbx;
-    pFbx->Load("Assets/torus.fbx");
+    pFbx->Load("Assets/Ball.fbx");
 
-    //transform_.scale_.x = 0.5f;
-    //transform_.scale_.y = 0.5f;
-    //transform_.scale_.z = 0.5f;
+    transform_.scale_.x = 2.0f;
+    transform_.scale_.y = 2.0f;
+    transform_.scale_.z = 2.0f;
 
 
 }
