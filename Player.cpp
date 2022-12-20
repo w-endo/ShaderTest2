@@ -19,7 +19,7 @@ Player::~Player()
 void Player::Initialize()
 {
     pFbx = new Fbx;
-    pFbx->Load("Assets/Ball.fbx");
+    pFbx->Load("Assets/Water.fbx");
 
     transform_.scale_.x = 2.0f;
     transform_.scale_.y = 2.0f;
@@ -31,7 +31,7 @@ void Player::Initialize()
 //çXêV
 void Player::Update()
 {
-    transform_.rotate_.y++;
+    //transform_.rotate_.y++;
 
 }
 

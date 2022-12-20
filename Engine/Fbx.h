@@ -31,6 +31,7 @@ class Fbx
 		XMFLOAT4 color;
 		XMFLOAT4 camPos;
 		int		 isTexture;
+		float scroll;
 	};
 
 	struct VERTEX
